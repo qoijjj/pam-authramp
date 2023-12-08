@@ -1,0 +1,12 @@
+[package]
+name = "pam-rampdelay"
+version = "0.1.0"
+authors = ["34n0 <34n0@immerda.ch>"]
+
+[lib]
+name = "pam_rampdelay"
+crate-type = ["cdylib"]
+
+[dependencies]
+pam-bindings = "0.1.1"
+
