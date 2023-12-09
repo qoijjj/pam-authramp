@@ -1,0 +1,2 @@
+auth sufficient libpam_rampdelay.so
+account sufficient libpam_rampdelay.so

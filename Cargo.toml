@@ -8,5 +8,6 @@ name = "pam_rampdelay"
 crate-type = ["cdylib"]
 
 [dependencies]
+pam-api = { version = "0.8.0", package = "pam" }
 pam-bindings = "0.1.1"
 
