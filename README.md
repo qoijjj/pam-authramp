@@ -2,7 +2,9 @@
 🚧 Disclaimer: This is in early development...
 ```
 # 🔒️ pam-rampdelay
-PAM module ramping up delay after consecutive failed login attempts
+This Pluggable Authentication Module (PAM) is designed to enhance security on personal devices by implementing a dynamic authentication delay mechanism following consecutive failed login attempts. The primary goal is to defend against brute force attacks while avoiding the drawbacks associated with traditional account lockouts.
+
+Read the whole [Threat Model Description](THREAT_MODEL.md).
 
 ## 🧑‍💻 development
 This module is developed and tested in a fedora 38 distrobox.
