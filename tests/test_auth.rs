@@ -16,7 +16,7 @@ const USER_NAME: &str = dotenv!("TEST_USER_NAME");
 const USER_PASSWD: &str = dotenv!("TEST_USER_PASSWD");
 
 // run before tests
-fn init() {
+fn setup() {
     // install library
     let _ = Command::new("sudo")
         .args([
@@ -27,11 +27,11 @@ fn init() {
         .status();
     // install configuration
     let _ = Command::new("sudo")
-        .args(["cp", "conf/rampdelay-auth", "/etc/pam.d"])
+        .args(["cp", "tests/conf/rampdelay-auth", "/etc/pam.d"])
         .status();
 }
 
-// run after tests>
+// run after tests
 fn clean() {
     // remove library
     let _ = Command::new("sudo")
@@ -45,7 +45,7 @@ fn clean() {
 
 #[test]
 fn valid_credentials() -> TestResult {
-    init();
+    setup();
 
     let mut context = Context::new(
         "rampdelay-auth", // Service name
