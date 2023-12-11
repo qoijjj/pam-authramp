@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate pam_client;
-extern crate sequential_test;
 
 mod common;
 
