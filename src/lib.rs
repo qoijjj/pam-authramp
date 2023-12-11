@@ -2,6 +2,7 @@ extern crate pam;
 
 use pam::constants::{PamFlag, PamResultCode};
 use pam::module::{PamHandle, PamHooks};
+use pam::pam_try;
 use std::ffi::CStr;
 struct PamRampDelay;
 
@@ -13,12 +14,13 @@ enum Actions {
 }
 
 #[derive(Debug)]
-struct Options {
+pub struct Options {
     action: Actions,
+    user: String,
 }
 
 impl Options {
-    fn args_parse(_pamh: &mut PamHandle, args: Vec<&CStr>, _flags: PamFlag) -> Self {
+    fn args_parse(pamh: &mut PamHandle, args: Vec<&CStr>, _flags: PamFlag) -> Self {
         let mut action = Actions::AUTHFAIL;
 
         args.iter().for_each(|&carg| {
@@ -31,14 +33,17 @@ impl Options {
                 _ => (),
             }
         });
-        Self { action }
+
+        Self { action, user: "".to_string() }
     }
 }
 
 pam::pam_hooks!(PamRampDelay);
 impl PamHooks for PamRampDelay {
-    fn sm_authenticate(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        let opts = Options::args_parse(_pamh, _args, _flags);
+    fn sm_authenticate(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
+        let mut opts = Options::args_parse(pamh, _args, _flags);
+
+        opts.user = pam_try!(pamh.get_user(None));
 
         PamResultCode::PAM_SUCCESS
     }
