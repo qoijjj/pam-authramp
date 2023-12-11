@@ -43,7 +43,7 @@ mod tests {
     }
 
     #[test]
-    fn invalid_credentials() {
+    fn invalid_credentials() -> TestResult {
         common::setup();
         let mut context = Context::new(
             "rampdelay-auth", // Service name
@@ -57,7 +57,7 @@ mod tests {
         common::clean();
         match res {
             Ok(_) => panic!("Authenticated with invalid credentials!"),
-            Err(_) => (),
+            Err(_) => Ok(()),
         }
     }
 }
