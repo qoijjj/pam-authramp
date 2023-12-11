@@ -1,4 +1,5 @@
 use std::{
+    env,
     fs::{copy, remove_file},
     path::Path,
 };
@@ -7,6 +8,7 @@ const LIBRARY_PATH: &str = dotenv!("TEST_LIBRARY_PATH");
 const SERVICE_PATH: &str = dotenv!("TEST_SERVICE_PATH");
 
 pub fn setup() {
+    env::set_var("TEST_MODE", "true");
     // copy library
     copy("target/release/libpam_rampdelay.so", LIBRARY_PATH)
         .expect("Failed to copy libpam_rampdelay.so");
