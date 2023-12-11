@@ -1,10 +1,13 @@
-
-
 auth        required                                     pam_env.so
 auth        [default=1 ignore=ignore success=ok]         pam_usertype.so isregular
 auth        [default=1 ignore=ignore success=ok]         pam_localuser.so
-auth        required                                     libpam_rampdelay.so
+
+# call rampdelay preauth
+auth        required                                     libpam_rampdelay.so preauth
 auth        sufficient                                   pam_unix.so nullok
+# pam_unix will return authfail
+auth        [default=die]                                libpam_rampdelay.so authfail
+
 auth        [default=1 ignore=ignore success=ok]         pam_usertype.so isregular
 auth        sufficient                                   pam_sss.so forward_pass
 auth        required                                     pam_deny.so

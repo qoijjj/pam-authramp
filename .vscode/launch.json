@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug integration test 'test_auth'",
+      "cargo": {
+        "args": [
+          "test",
+          "--no-run",
+          "--test=test_auth",
+          "--package=pam-rampdelay"
+        ],
+        "filter": {
+          "name": "test_auth",
+          "kind": "test"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

@@ -67,3 +67,27 @@ fn valid_credentials() -> TestResult {
     clean();
     Ok(())
 }
+
+
+#[test]
+fn invalid_credentials() -> TestResult {
+    setup();
+
+    let mut context = Context::new(
+        "rampdelay-auth", // Service name
+        None,
+        Conversation::with_credentials("invalid", "creds"),
+    )
+    .expect("Failed to initialize PAM context");
+
+    // Authenticate the user
+    let res = context
+        .authenticate(Flag::NONE);
+    
+    clean();
+
+    match res {
+        Ok(_) => panic!("Authenticated with invalid credentials!"),
+        Err(_) => Ok(()),
+    }
+}
