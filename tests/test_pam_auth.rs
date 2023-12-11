@@ -34,7 +34,8 @@ mod tests {
 
     #[test]
     fn test_rampdelay_authfail() -> TestResult {
-        let _ = common::test_service("test-rampdelay-authfail", USER_NAME, USER_PASSWD).unwrap_err();
+        let _ =
+            common::test_service("test-rampdelay-authfail", USER_NAME, USER_PASSWD).unwrap_err();
         Ok(())
     }
 }

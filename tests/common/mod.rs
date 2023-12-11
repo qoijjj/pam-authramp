@@ -36,14 +36,14 @@ pub fn test_service(srv: &str, u_name: &str, u_pwd: &str) -> TestResult {
     copy_library();
     copy_service(srv);
 
-    let mut Context = Context::new(
+    let mut ctx = Context::new(
         srv, // Service name
         None,
         Conversation::with_credentials(u_name, u_pwd),
     )?;
 
-    Context.authenticate(Flag::NONE)?;
-    Context.acct_mgmt(Flag::NONE)?;
+    ctx.authenticate(Flag::NONE)?;
+    ctx.acct_mgmt(Flag::NONE)?;
 
     delete_library();
     delete_service(srv);
