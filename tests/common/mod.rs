@@ -12,8 +12,8 @@ pub fn setup() {
         .expect("Failed to copy libpam_rampdelay.so");
 
     // copy configuration
-    copy("tests/conf/rampdelay-auth", "/etc/pam.d/rampdelay-auth")
-        .expect("Failed to copy rampdelay-auth");
+    copy("tests/conf/test-system-auth", "/etc/pam.d/test-system-auth")
+        .expect("Failed to copy test-system-auth");
 }
 
 pub fn clean() {
