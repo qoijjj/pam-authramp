@@ -20,7 +20,7 @@ pub struct Options {
 }
 
 impl Options {
-    fn args_parse(pamh: &mut PamHandle, args: Vec<&CStr>, _flags: PamFlag) -> Self {
+    fn args_parse(_pamh: &mut PamHandle, args: Vec<&CStr>, _flags: PamFlag) -> Self {
         let mut action = Actions::AUTHFAIL;
 
         args.iter().for_each(|&carg| {
@@ -34,7 +34,10 @@ impl Options {
             }
         });
 
-        Self { action, user: "".to_string() }
+        Self {
+            action,
+            user: "".to_string(),
+        }
     }
 }
 
@@ -45,7 +48,11 @@ impl PamHooks for PamRampDelay {
 
         opts.user = pam_try!(pamh.get_user(None));
 
-        PamResultCode::PAM_SUCCESS
+        match opts.action {
+            Actions::PREAUTH => PamResultCode::PAM_SUCCESS,
+            Actions::AUTHSUCC => PamResultCode::PAM_SUCCESS,
+            Actions::AUTHFAIL => PamResultCode::PAM_AUTH_ERR,
+        }
     }
 
     fn sm_setcred(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
