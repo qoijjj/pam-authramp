@@ -25,4 +25,16 @@ mod tests {
         let _ = common::test_service("test-system-auth", "INVALID", "CREDS").unwrap_err();
         Ok(())
     }
+
+    #[test]
+    fn test_rampdelay_preauth() -> TestResult {
+        let _ = common::test_service("test-rampdelay-preauth", USER_NAME, USER_PASSWD);
+        Ok(())
+    }
+
+    #[test]
+    fn test_rampdelay_authfail() -> TestResult {
+        let _ = common::test_service("test-rampdelay-authfail", USER_NAME, USER_PASSWD).unwrap_err();
+        Ok(())
+    }
 }
