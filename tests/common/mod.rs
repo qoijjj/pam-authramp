@@ -11,29 +11,38 @@ const SERVICE_DIR: &str = dotenv!("TEST_SERVICE_DIR");
 pub type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 fn copy_library() {
-    copy("target/release/libpam_rampdelay.so", LIBRARY_PATH).expect("Failed to copy library");
+    let src_path = Path::new("target/release/libpam_rampdelay.so");
+    let dest_path = Path::new(LIBRARY_PATH);
+
+    copy(src_path, dest_path).expect("Failed to copy library");
 }
 
 fn delete_library() {
-    if Path::new(LIBRARY_PATH).exists() {
-        remove_file(LIBRARY_PATH).expect("Failed to remove library");
+    let path = Path::new(LIBRARY_PATH);
+
+    if path.exists() {
+        remove_file(path).expect("Failed to remove library");
     }
 }
 
 fn copy_service(srv: &str) {
-    copy("tests/conf/".to_owned() + srv, SERVICE_DIR.to_owned() + srv)
-        .expect("Failed to copy service");
+    let src_path = Path::new("tests/conf").join(srv);
+    let dest_path = Path::new(SERVICE_DIR).join(srv);
+
+    copy(src_path, dest_path).expect("Failed to copy service");
 }
 
 fn delete_service(srv: &str) {
-    let path = &(SERVICE_DIR.to_owned() + srv);
-    if Path::new(path).exists() {
+    let path = Path::new(SERVICE_DIR).join(srv);
+
+    if path.exists() {
         remove_file(path).expect("Failed to remove service");
     }
 }
 
 pub fn test_service(srv: &str, u_name: &str, u_pwd: &str) -> TestResult {
     copy_library();
+
     copy_service(srv);
 
     let mut ctx = Context::new(
@@ -47,5 +56,6 @@ pub fn test_service(srv: &str, u_name: &str, u_pwd: &str) -> TestResult {
 
     delete_library();
     delete_service(srv);
+
     Ok(())
 }

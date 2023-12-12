@@ -1,2 +1,3 @@
+# run tests with sudo privileges to get write access in /usr/lib64 and /etc
 [target.x86_64-unknown-linux-gnu]
 runner = 'sudo -E'

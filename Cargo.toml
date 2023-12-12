@@ -1,14 +1,16 @@
 [package]
 name = "pam-rampdelay"
 version = "0.1.0"
+description = "A PAM module for implementing ramping up delay on authentication failures."
 authors = ["34n0 <34n0@immerda.ch>"]
+license = "GPL-3.0"
 
 [lib]
 name = "pam_rampdelay"
 crate-type = ["cdylib"]
 
 [dependencies]
-dotenv = "0.15.0"
-dotenv_codegen = "0.15.0"
+dotenv = "^0.15.0"
+dotenv_codegen = "^0.15.0"
 pam-bindings = "0.1.1"
 pam-client = "0.5.0"

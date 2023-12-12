@@ -21,22 +21,23 @@ pub struct Options {
 
 impl Options {
     fn args_parse(_pamh: &mut PamHandle, args: Vec<&CStr>, _flags: PamFlag) -> Self {
-        let mut action = Actions::AUTHFAIL;
+        let action = args
+            .iter()
+            .find_map(|&carg| {
+                let arg = carg.to_str().expect("Invalid Argument UTF-8");
 
-        args.iter().for_each(|&carg| {
-            let arg = carg.to_str().expect("Invalid Argument UTF-8");
-
-            match arg {
-                "preauth" => action = Actions::PREAUTH,
-                "authsucc" => action = Actions::AUTHSUCC,
-                "authfail" => action = Actions::AUTHFAIL,
-                _ => (),
-            }
-        });
+                match arg {
+                    "preauth" => Some(Actions::PREAUTH),
+                    "authsucc" => Some(Actions::AUTHSUCC),
+                    "authfail" => Some(Actions::AUTHFAIL),
+                    _ => None,
+                }
+            })
+            .unwrap_or(Actions::AUTHFAIL);
 
         Self {
             action,
-            user: "".to_string(),
+            user: String::new(),
         }
     }
 }
@@ -45,12 +46,10 @@ pam::pam_hooks!(PamRampDelay);
 impl PamHooks for PamRampDelay {
     fn sm_authenticate(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
         let mut opts = Options::args_parse(pamh, _args, _flags);
-
         opts.user = pam_try!(pamh.get_user(None));
 
         match opts.action {
-            Actions::PREAUTH => PamResultCode::PAM_SUCCESS,
-            Actions::AUTHSUCC => PamResultCode::PAM_SUCCESS,
+            Actions::PREAUTH | Actions::AUTHSUCC => PamResultCode::PAM_SUCCESS,
             Actions::AUTHFAIL => PamResultCode::PAM_AUTH_ERR,
         }
     }

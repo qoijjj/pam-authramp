@@ -5,7 +5,6 @@ extern crate pam_client;
 mod common;
 
 // Authentication Integration Tests
-// Intended to run in containerized dev environment.
 #[cfg(test)]
 mod tests {
     use super::common;
@@ -16,26 +15,29 @@ mod tests {
 
     #[test]
     fn test_system_auth_valid() -> TestResult {
-        let _ = common::test_service("test-system-auth", USER_NAME, USER_PASSWD);
+        // Test that the system authentication is successful with valid credentials
+        common::test_service("test-system-auth", USER_NAME, USER_PASSWD)?;
         Ok(())
     }
 
     #[test]
     fn test_system_auth_invalid() -> TestResult {
-        let _ = common::test_service("test-system-auth", "INVALID", "CREDS").unwrap_err();
+        // Test that the system authentication is unsuccessful with invalid credentials
+        assert!(common::test_service("test-system-auth", "INVALID", "CREDS").is_err());
         Ok(())
     }
 
     #[test]
     fn test_rampdelay_preauth() -> TestResult {
-        let _ = common::test_service("test-rampdelay-preauth", USER_NAME, USER_PASSWD);
+        // Test that the rampdelay auth initializes properly and returns successful
+        common::test_service("test-rampdelay-preauth", USER_NAME, USER_PASSWD)?;
         Ok(())
     }
 
     #[test]
     fn test_rampdelay_authfail() -> TestResult {
-        let _ =
-            common::test_service("test-rampdelay-authfail", USER_NAME, USER_PASSWD).unwrap_err();
+        // Test that the rampdelay authfail parameter unsuccessful even with valid credentials
+        assert!(common::test_service("test-rampdelay-authfail", USER_NAME, USER_PASSWD).is_err());
         Ok(())
     }
 }
