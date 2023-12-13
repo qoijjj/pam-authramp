@@ -7,9 +7,8 @@ use std::ffi::CStr;
 use self::configparser::ini::Ini;
 use crate::Actions;
 use pam::{constants::PamFlag, module::PamResult};
-use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug)]
 pub struct Options {
     pub action: Actions,
     pub user: String,
