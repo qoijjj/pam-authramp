@@ -1,8 +1,15 @@
-use crate::Actions;
-use pam::constants::PamFlag;
+extern crate configparser;
+extern crate serde;
+
+use std::default::Default;
 use std::ffi::CStr;
 
-#[derive(Debug)]
+use self::configparser::ini::Ini;
+use crate::Actions;
+use pam::{constants::PamFlag, module::PamResult};
+use serde::{Deserialize, Serialize};
+
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Options {
     pub action: Actions,
     pub user: String,
@@ -10,9 +17,16 @@ pub struct Options {
 }
 
 impl Options {
-    pub fn args_parse(args: Vec<&CStr>, _flags: PamFlag) -> Self {
+    pub fn conf_load(user: String) -> PamResult<Options> {
+        let mut opts = Options::default();
+        let mut config = Ini::new();
+        opts.user = user;
+        Ok(opts)
+    }
+
+    pub fn args_parse(&mut self, args: Vec<&CStr>, _flags: PamFlag) -> PamResult<()> {
         // init action argument
-        let action = args
+        self.action = args
             .iter()
             .find_map(|&carg| {
                 let arg = carg.to_str().expect("Invalid Argument UTF-8");
@@ -25,10 +39,6 @@ impl Options {
                 }
             })
             .unwrap_or(Actions::AUTHFAIL);
-        Self {
-            action,
-            user: String::new(),
-            tally_dir: String::new(),
-        }
+        Ok(())
     }
 }

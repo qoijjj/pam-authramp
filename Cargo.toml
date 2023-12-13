@@ -10,7 +10,10 @@ name = "pam_rampdelay"
 crate-type = ["cdylib"]
 
 [dependencies]
+configparser = "3.0.3"
 dotenv = "^0.15.0"
 dotenv_codegen = "^0.15.0"
 pam-bindings = "0.1.1"
 pam-client = "0.5.0"
+rust-ini = "0.20.0"
+serde = "1.0.193"
