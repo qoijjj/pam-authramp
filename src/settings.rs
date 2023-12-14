@@ -38,7 +38,7 @@ impl Settings {
         _flags: PamFlag,
     ) -> Result<Settings, PamResultCode> {
         // Load INI file.
-        let mut opts = Ini::load_from_file(PathBuf::from(CONFIG_PATH.to_string()).as_path())
+        let mut settings = Ini::load_from_file(PathBuf::from(CONFIG_PATH.to_string()).as_path())
             .ok()
             // Clone "Settings" section if it exists.
             .and_then(|ini| {
@@ -67,26 +67,26 @@ impl Settings {
         .collect();
 
         // map argument to action
-        opts.action = args.iter().find_map(|&carg| {
+        settings.action = args.iter().find_map(|&carg| {
             carg.to_str()
                 .ok()
                 .and_then(|arg| action_map.get(arg).cloned())
         });
 
         // get user
-        opts.user = get_user_by_name(&username);
+        settings.user = get_user_by_name(&username);
 
-        if opts.action.is_none() {
+        if settings.action.is_none() {
             // TODO: log
             return Err(PamResultCode::PAM_AUTH_ERR);
         }
 
-        if opts.user.is_none() {
+        if settings.user.is_none() {
             // TODO: log
             return Err(PamResultCode::PAM_SYSTEM_ERR);
         }
 
-        Ok(opts)
+        Ok(settings)
     }
 }
 
@@ -122,9 +122,9 @@ mod tests {
             .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
         .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
+        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
-            opts.tally_dir, "./tests/tally",
+            settings.tally_dir, "./tests/tally",
             "Expected ./tests/tally tall_dir value"
         );
         Ok(())
@@ -150,9 +150,9 @@ mod tests {
             .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
         .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
+        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
-            opts.action,
+            settings.action,
             Some(Actions::PREAUTH),
             "Expected action to be Preauth"
         );
@@ -166,9 +166,9 @@ mod tests {
             .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
         .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
+        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
-            opts.action,
+            settings.action,
             Some(Actions::AUTHFAIL),
             "Expected action to be Authfail"
         );
@@ -185,8 +185,8 @@ mod tests {
 
         let flags: PamFlag = 0;
 
-        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
-        assert!(opts.user.is_some(), "Expected user to be Some");
+        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
+        assert!(settings.user.is_some(), "Expected user to be Some");
         Ok(())
     }
 
