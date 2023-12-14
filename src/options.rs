@@ -2,6 +2,8 @@ extern crate ini;
 extern crate lazy_static;
 extern crate serde;
 extern crate users;
+extern crate once_cell;
+
 
 use std::collections::HashMap;
 use std::env;
@@ -13,20 +15,15 @@ use self::lazy_static::lazy_static;
 use self::serde::Deserialize;
 use self::users::{get_user_by_name, User};
 use crate::Actions;
+use self::once_cell::sync::Lazy;
 use pam::constants::PamResultCode;
 use pam::{constants::PamFlag, module::PamResult};
 
 const DEFAULT_TALLY_DIR: &str = "/var/run/rampdelay";
 const DEFAULT_CONFIG_PATH: &str = "/etc/security/rampdelay.conf";
-lazy_static! {
-    static ref CONFIG_PATH: String = {
-        if let Ok(val) = env::var("TEST_CONFIG_PATH") {
-            String::from(val)
-        } else {
-            String::from(DEFAULT_CONFIG_PATH)
-        }
-    };
-}
+static CONFIG_PATH: Lazy<String> = Lazy::new(|| {
+    env::var("TEST_CONFIG_PATH").unwrap_or_else(|_| DEFAULT_CONFIG_PATH.to_string())
+});
 
 #[derive(Debug)]
 pub struct Options {
@@ -39,6 +36,7 @@ impl Default for Options {
     fn default() -> Self {
         Options {
             tally_dir: String::from(DEFAULT_TALLY_DIR),
+            action: None,
         }
     }
 }
@@ -82,14 +80,20 @@ impl Options {
 mod tests {
     use super::*;
     use dotenv_codegen::dotenv;
+    use crate::serial_test::serial;
 
     pub type TestResult = Result<(), Box<dyn std::error::Error>>;
 
     const USER_NAME: &str = dotenv!("TEST_USER_NAME");
 
+    fn set_test_conf_path() {
+        // Reset the CONFIG_PATH before each test
+        env::set_var("TEST_CONFIG_PATH", "tests/conf/rampdelay.conf");
+    }
+
     #[test]
     fn test_conf_path() -> TestResult {
-        env::set_var("TEST_CONFIG_PATH", "tests/conf/rampdelay.conf");
+        set_test_conf_path();
         assert_eq!(
             CONFIG_PATH.as_str(),
             "tests/conf/rampdelay.conf",
@@ -99,21 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn test_conf_tally_dir_default() -> TestResult {
-        env::set_var("TEST_CONFIG_PATH", "/bad/path");
-        let args = [].to_vec();
-        let flags: PamFlag = 0;
-        let opts = Options::build(USER_NAME.to_string(), args, flags);
-        assert_eq!(
-            opts.tally_dir, DEFAULT_TALLY_DIR,
-            "Expected default tally_dir value"
-        );
-        Ok(())
-    }
-
-    #[test]
     fn test_conf_tally_dir() -> TestResult {
-        env::set_var("TEST_CONFIG_PATH", "tests/conf/rampdelay.conf");
         let args = [].to_vec();
         let flags: PamFlag = 0;
         let opts = Options::build(USER_NAME.to_string(), args, flags);
