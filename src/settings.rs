@@ -1,7 +1,7 @@
 use crate::Actions;
 use ini::Ini;
 use once_cell::sync::Lazy;
-use pam::constants::PamFlag;
+use pam::constants::{PamFlag, PamResultCode};
 use std::collections::HashMap;
 use std::env;
 use std::ffi::CStr;
@@ -32,7 +32,11 @@ impl Default for Settings {
 }
 
 impl Settings {
-    pub fn build(username: String, args: Vec<&CStr>, _flags: PamFlag) -> Settings {
+    pub fn build(
+        username: String,
+        args: Vec<&CStr>,
+        _flags: PamFlag,
+    ) -> Result<Settings, PamResultCode> {
         // Load INI file.
         let mut opts = Ini::load_from_file(PathBuf::from(CONFIG_PATH.to_string()).as_path())
             .ok()
@@ -72,7 +76,17 @@ impl Settings {
         // get user
         opts.user = get_user_by_name(&username);
 
-        opts
+        if opts.action.is_none() {
+            // TODO: log
+            return Err(PamResultCode::PAM_AUTH_ERR);
+        }
+
+        if opts.user.is_none() {
+            // TODO: log
+            return Err(PamResultCode::PAM_SYSTEM_ERR);
+        }
+
+        Ok(opts)
     }
 }
 
@@ -81,7 +95,7 @@ mod tests {
     use super::*;
     use dotenv_codegen::dotenv;
 
-    pub type TestResult = Result<(), Box<dyn std::error::Error>>;
+    pub type TestResult = Result<(), PamResultCode>;
 
     const USER_NAME: &str = dotenv!("TEST_USER_NAME");
 
@@ -104,9 +118,11 @@ mod tests {
     #[test]
     fn test_conf_tally_dir() -> TestResult {
         set_test_conf_path();
-        let args = [].to_vec();
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
+            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
+        .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags);
+        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
             opts.tally_dir, "./tests/tally",
             "Expected ./tests/tally tall_dir value"
@@ -119,17 +135,22 @@ mod tests {
         set_test_conf_path();
         let args = [].to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags);
-        assert!(opts.action.is_none(), "Expected action to be None");
+        let b_result = Settings::build(USER_NAME.to_string(), args, flags);
+        assert!(
+            matches!(b_result, Err(PamResultCode::PAM_AUTH_ERR)),
+            "Expected PAM_AUTH_ERROR"
+        );
         Ok(())
     }
 
     #[test]
     fn test_action_preauth() -> TestResult {
         set_test_conf_path();
-        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())?].to_vec();
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
+            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
+        .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags);
+        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
             opts.action,
             Some(Actions::PREAUTH),
@@ -141,9 +162,11 @@ mod tests {
     #[test]
     fn test_action_authfail() -> TestResult {
         set_test_conf_path();
-        let args = [CStr::from_bytes_with_nul("authfail\0".as_bytes())?].to_vec();
+        let args = [CStr::from_bytes_with_nul("authfail\0".as_bytes())
+            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
+        .to_vec();
         let flags: PamFlag = 0;
-        let opts = Settings::build(USER_NAME.to_string(), args, flags);
+        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
             opts.action,
             Some(Actions::AUTHFAIL),
@@ -156,10 +179,13 @@ mod tests {
     fn test_conf_load_uname_valid() -> TestResult {
         set_test_conf_path();
 
-        let args: Vec<&CStr> = [].to_vec();
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
+            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
+        .to_vec();
+
         let flags: PamFlag = 0;
 
-        let opts = Settings::build(USER_NAME.to_string(), args, flags);
+        let opts = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert!(opts.user.is_some(), "Expected user to be Some");
         Ok(())
     }
@@ -168,11 +194,17 @@ mod tests {
     fn test_conf_load_uname_invalid() -> TestResult {
         set_test_conf_path();
 
-        let args: Vec<&CStr> = [].to_vec();
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
+            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
+        .to_vec();
+
         let flags: PamFlag = 0;
 
-        let opts = Settings::build("invalid".to_string(), args, flags);
-        assert!(opts.user.is_none(), "Expected user to be none");
+        let b_result = Settings::build("INVALID".to_string(), args, flags);
+        assert!(
+            matches!(b_result, Err(PamResultCode::PAM_SYSTEM_ERR)),
+            "Expected PAM_SYSTEM_ERR"
+        );
         Ok(())
     }
 }
