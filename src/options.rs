@@ -61,7 +61,7 @@ impl Options {
             })
             // Fallback to default Options if any failures.
             .unwrap_or_else(|| Options::default());
-/*
+
             let action_map: HashMap<&str, Actions> = [
                 ("preauth", Actions::PREAUTH),
                 ("authsucc", Actions::AUTHSUCC),
@@ -71,7 +71,7 @@ impl Options {
             opts.action = args
                 .iter()
                 .find_map(|&carg| carg.to_str().ok().and_then(|arg| action_map.get(arg).cloned()));
-*/
+
         opts
     }
 }
@@ -80,7 +80,6 @@ impl Options {
 mod tests {
     use super::*;
     use dotenv_codegen::dotenv;
-    use crate::serial_test::serial;
 
     pub type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -104,6 +103,7 @@ mod tests {
 
     #[test]
     fn test_conf_tally_dir() -> TestResult {
+        set_test_conf_path();
         let args = [].to_vec();
         let flags: PamFlag = 0;
         let opts = Options::build(USER_NAME.to_string(), args, flags);
@@ -111,6 +111,36 @@ mod tests {
             opts.tally_dir, "./tests/tally",
             "Expected ./tests/tally tall_dir value"
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_action_default() -> TestResult {
+        set_test_conf_path();
+        let args = [].to_vec();
+        let flags: PamFlag = 0;
+        let opts = Options::build(USER_NAME.to_string(), args, flags);
+        assert!(opts.action.is_none(), "Expected action to be None");
+        Ok(())
+    }
+
+    #[test]
+    fn test_action_preauth() -> TestResult {
+        set_test_conf_path();
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())?].to_vec();
+        let flags: PamFlag = 0;
+        let opts = Options::build(USER_NAME.to_string(), args, flags);
+        assert_eq!(opts.action, Some(Actions::PREAUTH), "Expected action to be Preauth");
+        Ok(())
+    }  
+    
+    #[test]
+    fn test_action_authfail() -> TestResult {
+        set_test_conf_path();
+        let args = [CStr::from_bytes_with_nul("authfail\0".as_bytes())?].to_vec();
+        let flags: PamFlag = 0;
+        let opts = Options::build(USER_NAME.to_string(), args, flags);
+        assert_eq!(opts.action, Some(Actions::AUTHFAIL), "Expected action to be Authfail");
         Ok(())
     }
     /*
