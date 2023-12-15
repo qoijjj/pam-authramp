@@ -18,13 +18,13 @@ static CONFIG_PATH: Lazy<String> = Lazy::new(|| {
 pub struct Settings {
     pub action: Option<Actions>,
     pub user: Option<User>,
-    pub tally_dir: String,
+    pub tally_dir: PathBuf,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            tally_dir: String::from(DEFAULT_TALLY_DIR),
+            tally_dir: PathBuf::from(DEFAULT_TALLY_DIR),
             action: None,
             user: None,
         }
@@ -49,7 +49,7 @@ impl Settings {
             .map(|settings| Settings {
                 tally_dir: settings
                     .get("tally_dir")
-                    .map(|s| s.to_string())
+                    .map(|s| PathBuf::from(s))
                     .unwrap_or_default(),
                 ..Settings::default()
             })
@@ -124,7 +124,7 @@ mod tests {
         let flags: PamFlag = 0;
         let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
-            settings.tally_dir, "./tests/tally",
+            settings.tally_dir, PathBuf::from("./tests/tally"),
             "Expected ./tests/tally tall_dir value"
         );
         Ok(())
