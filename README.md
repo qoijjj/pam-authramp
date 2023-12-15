@@ -14,7 +14,7 @@ sudo dnf install pam-devel clang-devel just
 Edit the environment variables in the `.env` file. Change the environment variables for `TEST_USER_NAME` & `TEST_USER_PASSWD` to a matching user with the correct permissions.
 Run all tests:
 ```console
-just unit-test
+just test
 ```
 #### ✅ Unit tests
 All moduled except the library endpoints are unit tested. The library endpoints are tested in the auth integration test.
