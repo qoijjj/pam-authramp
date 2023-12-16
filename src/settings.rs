@@ -1,18 +1,13 @@
 use crate::Actions;
 use ini::Ini;
-use once_cell::sync::Lazy;
 use pam::constants::{PamFlag, PamResultCode};
 use std::collections::HashMap;
-use std::env;
 use std::ffi::CStr;
 use std::path::PathBuf;
-use users::{get_user_by_name, User};
+use users::User;
 
 const DEFAULT_TALLY_DIR: &str = "/var/run/rampdelay";
-const DEFAULT_CONFIG_PATH: &str = "/etc/security/rampdelay.conf";
-static CONFIG_PATH: Lazy<String> = Lazy::new(|| {
-    env::var("TEST_CONFIG_PATH").unwrap_or_else(|_| String::from(DEFAULT_CONFIG_PATH))
-});
+const DEFAULT_CONFIG_FILE_PATH: &str = "/etc/security/rampdelay.conf";
 
 #[derive(Debug)]
 pub struct Settings {
@@ -33,28 +28,31 @@ impl Default for Settings {
 
 impl Settings {
     pub fn build(
-        username: String,
+        user: Option<User>,
         args: Vec<&CStr>,
         _flags: PamFlag,
+        _config_file: Option<PathBuf>,
     ) -> Result<Settings, PamResultCode> {
         // Load INI file.
-        let mut settings = Ini::load_from_file(PathBuf::from(CONFIG_PATH.to_string()).as_path())
-            .ok()
-            // Clone "Settings" section if it exists.
-            .and_then(|ini| {
-                ini.section(Some("Settings"))
-                    .map(|settings| settings.clone())
-            })
-            // Map section to Settings struct, defaulting "tally_dir" if absent.
-            .map(|settings| Settings {
-                tally_dir: settings
-                    .get("tally_dir")
-                    .map(|s| PathBuf::from(s))
-                    .unwrap_or_default(),
-                ..Settings::default()
-            })
-            // Fallback to default Settings if any failures.
-            .unwrap_or_else(|| Settings::default());
+        let mut settings = Ini::load_from_file(
+            _config_file.unwrap_or_else(|| PathBuf::from(DEFAULT_CONFIG_FILE_PATH)),
+        )
+        .ok()
+        // Clone "Settings" section if it exists.
+        .and_then(|ini| {
+            ini.section(Some("Settings"))
+                .map(|settings| settings.clone())
+        })
+        // Map section to Settings struct, defaulting "tally_dir" if absent.
+        .map(|settings| Settings {
+            tally_dir: settings
+                .get("tally_dir")
+                .map(|s| PathBuf::from(s))
+                .unwrap_or_default(),
+            ..Settings::default()
+        })
+        // Fallback to default Settings if any failures.
+        .unwrap_or_else(|| Settings::default());
 
         // create possible action collection
         let action_map: HashMap<&str, Actions> = [
@@ -74,7 +72,7 @@ impl Settings {
         });
 
         // get user
-        settings.user = get_user_by_name(&username);
+        settings.user = user;
 
         if settings.action.is_none() {
             // TODO: log
@@ -93,119 +91,93 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dotenv_codegen::dotenv;
+    use std::ffi::CStr;
+    use std::fs;
+    use tempdir::TempDir;
+    use users::User;
 
-    pub type TestResult = Result<(), PamResultCode>;
+    #[test]
+    // Test default settings
+    fn test_default_settings() {
+        let default_settings = Settings::default();
 
-    const USER_NAME: &str = dotenv!("TEST_USER_NAME");
+        // Check if default tally_dir is set
+        assert_eq!(default_settings.tally_dir, PathBuf::from(DEFAULT_TALLY_DIR));
 
-    fn set_test_conf_path() {
-        // Reset the CONFIG_PATH before each test
-        env::set_var("TEST_CONFIG_PATH", "tests/conf/rampdelay.conf");
+        // Check if action is None in default settings
+        assert!(default_settings.action.is_none());
+
+        // Check if user is None in default settings
+        assert!(default_settings.user.is_none());
     }
 
     #[test]
-    fn test_conf_path() -> TestResult {
-        set_test_conf_path();
-        assert_eq!(
-            CONFIG_PATH.as_str(),
-            "tests/conf/rampdelay.conf",
-            "Expected testing config path"
-        );
-        Ok(())
-    }
+    // Test building settings from an existing INI file
+    fn test_build_settings_from_ini() {
+        // Create a temporary directory
+        let temp_dir = TempDir::new("test_build_settings_from_ini").unwrap();
+        let ini_file_path = temp_dir.path().join("config.conf");
 
-    #[test]
-    fn test_conf_tally_dir() -> TestResult {
-        set_test_conf_path();
-        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
-            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
-        .to_vec();
+        // Create a sample INI file
+        let mut i = Ini::new();
+        i.with_section(Some("Settings"))
+            .set("tally_dir", "/tmp/tally_dir");
+
+        i.write_to_file(&ini_file_path).unwrap();
+
+        // Mock command line arguments
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes()).unwrap()].to_vec();
         let flags: PamFlag = 0;
-        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
-        assert_eq!(
-            settings.tally_dir,
-            PathBuf::from("./tests/tally"),
-            "Expected ./tests/tally tall_dir value"
+        // Call build to create settings from the INI file
+        let result = Settings::build(
+            Some(User::new(9999, "test_user", 9999)),
+            args,
+            flags,
+            Some(ini_file_path),
         );
-        Ok(())
+
+        // Check if settings are created successfully
+        assert!(result.is_ok());
+        let settings = result.unwrap();
+
+        // Check if tally_dir is read from the INI file
+        assert_eq!(settings.tally_dir, PathBuf::from("/tmp/tally_dir"));
+
+        // Check if action is mapped correctly from command line arguments
+        assert_eq!(settings.action, Some(Actions::PREAUTH));
+
+        // Check if user is retrieved successfully
+        assert!(settings.user.is_some());
+        assert_eq!(settings.user.unwrap().name(), "test_user");
     }
 
     #[test]
-    fn test_action_default() -> TestResult {
-        set_test_conf_path();
-        let args = [].to_vec();
-        let flags: PamFlag = 0;
-        let b_result = Settings::build(USER_NAME.to_string(), args, flags);
-        assert!(
-            matches!(b_result, Err(PamResultCode::PAM_AUTH_ERR)),
-            "Expected PAM_AUTH_ERROR"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_action_preauth() -> TestResult {
-        set_test_conf_path();
-        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
-            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
-        .to_vec();
-        let flags: PamFlag = 0;
-        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
-        assert_eq!(
-            settings.action,
-            Some(Actions::PREAUTH),
-            "Expected action to be Preauth"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_action_authfail() -> TestResult {
-        set_test_conf_path();
-        let args = [CStr::from_bytes_with_nul("authfail\0".as_bytes())
-            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
-        .to_vec();
-        let flags: PamFlag = 0;
-        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
-        assert_eq!(
-            settings.action,
-            Some(Actions::AUTHFAIL),
-            "Expected action to be Authfail"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_conf_load_uname_valid() -> TestResult {
-        set_test_conf_path();
-
-        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
-            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
-        .to_vec();
-
+    // Test building settings with missing action
+    fn test_build_settings_missing_action() {
+        // Mock command line arguments with missing action
+        let args = vec![];
         let flags: PamFlag = 0;
 
-        let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
-        assert!(settings.user.is_some(), "Expected user to be Some");
-        Ok(())
+        // Call build with missing action
+        let result = Settings::build(Some(User::new(9999, "test_user", 9999)), args, flags, None);
+
+        // Check if an error is returned due to missing action
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), PamResultCode::PAM_AUTH_ERR);
     }
 
     #[test]
-    fn test_conf_load_uname_invalid() -> TestResult {
-        set_test_conf_path();
-
-        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes())
-            .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?]
-        .to_vec();
-
+    // Test building settings with missing user
+    fn test_build_settings_missing_user() {
+        // Mock command line arguments
+        let args = [CStr::from_bytes_with_nul("preauth\0".as_bytes()).unwrap()].to_vec();
         let flags: PamFlag = 0;
 
-        let b_result = Settings::build("INVALID".to_string(), args, flags);
-        assert!(
-            matches!(b_result, Err(PamResultCode::PAM_SYSTEM_ERR)),
-            "Expected PAM_SYSTEM_ERR"
-        );
-        Ok(())
+        // Call build with missing user
+        let result = Settings::build(None, args, flags, None);
+
+        // Check if an error is returned due to missing user
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), PamResultCode::PAM_SYSTEM_ERR);
     }
 }
