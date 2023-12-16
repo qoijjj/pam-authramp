@@ -1,7 +1,4 @@
-use std::{
-    fs,
-    path::PathBuf,
-};
+use std::{fs, path::PathBuf};
 
 use crate::{settings::Settings, Actions};
 use chrono::{DateTime, Utc};
@@ -163,5 +160,68 @@ mod tests {
         let ini_content = fs::read_to_string(&tally_file_path).unwrap();
         assert!(ini_content.contains("[Fails]"));
         assert!(ini_content.contains("count=0"));
+    }
+
+    #[test]
+    fn test_open_auth_fail_updates_values() {
+        // Create a temporary directory
+        let temp_dir = TempDir::new("test_open_auth_fail_updates_values").unwrap();
+        let tally_file_path = temp_dir.path().join("test_user_c");
+
+        // Create an existing INI file with some initial values
+        let mut i = Ini::new();
+        i.with_section(Some("Fails"))
+            .set("count", "2")
+            .set("instant", "2023-01-01T00:00:00Z");
+        i.write_to_file(&tally_file_path).unwrap();
+
+        // Create settings and call open with AUTHFAIL action
+        let settings = Settings {
+            user: Some(User::new(9999, "test_user_c", 9999)),
+            tally_dir: temp_dir.path().to_path_buf(),
+            action: Some(Actions::AUTHFAIL),
+        };
+
+        let tally = Tally::open(&settings).unwrap();
+
+        // Check if the values are updated on AUTHFAIL
+        assert_eq!(tally.failures_count, 3); // Assuming you increment the count
+        // Also, assert that the instant is updated to the current time
+
+        // Optionally, you can assert that the file is updated
+        let ini_content = fs::read_to_string(&tally_file_path).unwrap();
+        assert!(ini_content.contains("count=3"));
+        // Also, assert the instant value in the INI file
+
+        // Additional assertions as needed
+    }
+
+    #[test]
+    fn test_open_auth_succ_deletes_file() {
+        // Create a temporary directory
+        let temp_dir = TempDir::new("test_open_auth_succ_deletes_file").unwrap();
+        let tally_file_path = temp_dir.path().join("test_user_d");
+
+        // Create an existing INI file
+        let mut i = Ini::new();
+        i.with_section(Some("Fails"))
+            .set("count", "2")
+            .set("instant", "2023-01-01T00:00:00Z");
+        i.write_to_file(&tally_file_path).unwrap();
+
+        // Create settings and call open with AUTHSUCC action
+        let settings = Settings {
+            user: Some(User::new(9999, "test_user_d", 9999)),
+            tally_dir: temp_dir.path().to_path_buf(),
+            action: Some(Actions::AUTHSUCC),
+        };
+
+        let tally = Tally::open(&settings).unwrap();
+
+        // Check if the file is deleted on AUTHSUCC
+        assert!(!tally_file_path.exists());
+        // You may also want to assert that the INI file is not present
+
+        // Additional assertions as needed
     }
 }
