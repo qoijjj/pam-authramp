@@ -92,7 +92,6 @@ impl Settings {
 mod tests {
     use super::*;
     use std::ffi::CStr;
-    use std::fs;
     use tempdir::TempDir;
     use users::User;
 
