@@ -1,61 +1,64 @@
-use std::{
-    fs::{copy, remove_file},
-    path::Path,
-};
+#[cfg(test)]
+pub mod utilities {
+    use std::{
+        fs::{copy, remove_file},
+        path::Path,
+    };
 
-use pam_client::{conv_mock::Conversation, Context, Flag};
+    use pam_client::{conv_mock::Conversation, Context, Flag};
 
-const LIBRARY_PATH: &str = dotenv!("TEST_LIBRARY_PATH");
-const SERVICE_DIR: &str = dotenv!("TEST_SERVICE_DIR");
+    const LIBRARY_PATH: &str = dotenv!("TEST_LIBRARY_PATH");
+    const SERVICE_DIR: &str = dotenv!("TEST_SERVICE_DIR");
 
-pub type TestResult = Result<(), Box<dyn std::error::Error>>;
+    pub type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-fn copy_library() {
-    let src_path = Path::new("target/release/libpam_rampdelay.so");
-    let dest_path = Path::new(LIBRARY_PATH);
+    fn copy_library() {
+        let src_path = Path::new("target/release/libpam_rampdelay.so");
+        let dest_path = Path::new(LIBRARY_PATH);
 
-    copy(src_path, dest_path).expect("Failed to copy library");
-}
-
-fn delete_library() {
-    let path = Path::new(LIBRARY_PATH);
-
-    if path.exists() {
-        remove_file(path).expect("Failed to remove library");
+        copy(src_path, dest_path).expect("Failed to copy library");
     }
-}
 
-fn copy_service(srv: &str) {
-    let src_path = Path::new("tests/conf").join(srv);
-    let dest_path = Path::new(SERVICE_DIR).join(srv);
+    fn delete_library() {
+        let path = Path::new(LIBRARY_PATH);
 
-    copy(src_path, dest_path).expect("Failed to copy service");
-}
-
-fn delete_service(srv: &str) {
-    let path = Path::new(SERVICE_DIR).join(srv);
-
-    if path.exists() {
-        remove_file(path).expect("Failed to remove service");
+        if path.exists() {
+            remove_file(path).expect("Failed to remove library");
+        }
     }
-}
 
-pub fn test_service(srv: &str, u_name: &str, u_pwd: &str) -> TestResult {
-    copy_library();
+    fn copy_service(srv: &str) {
+        let src_path = Path::new("tests/conf").join(srv);
+        let dest_path = Path::new(SERVICE_DIR).join(srv);
 
-    copy_service(srv);
+        copy(src_path, dest_path).expect("Failed to copy service");
+    }
 
-    let mut ctx = Context::new(
-        srv, // Service name
-        None,
-        Conversation::with_credentials(u_name, u_pwd),
-    )?;
+    fn delete_service(srv: &str) {
+        let path = Path::new(SERVICE_DIR).join(srv);
 
-    ctx.authenticate(Flag::NONE)?;
-    ctx.acct_mgmt(Flag::NONE)?;
+        if path.exists() {
+            remove_file(path).expect("Failed to remove service");
+        }
+    }
 
-    delete_library();
-    delete_service(srv);
+    pub fn test_service(srv: &str, u_name: &str, u_pwd: &str) -> TestResult {
+        copy_library();
 
-    Ok(())
+        copy_service(srv);
+
+        let mut ctx = Context::new(
+            srv, // Service name
+            None,
+            Conversation::with_credentials(u_name, u_pwd),
+        )?;
+
+        ctx.authenticate(Flag::NONE)?;
+        ctx.acct_mgmt(Flag::NONE)?;
+
+        delete_library();
+        delete_service(srv);
+
+        Ok(())
+    }
 }
