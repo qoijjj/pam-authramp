@@ -22,11 +22,3 @@ Run unit tests:
 ```console
 just unit-test
 ```
-#### 🔒️ Authentication integration test
-For different test cases there are PAM service script inside the `tests/conf` folder. The configuration files and the built library are copied to the folders specified in the `.env` file. The test is then executed by interfacing with the systems PAM process.
-*⚠️ Note: Because the tests need write access to /usr/lib64 and /etc, the tests are run with elevated privileges.*
-
-To build and test in one command:
-```console
-just auth-test
-```
