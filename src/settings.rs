@@ -124,7 +124,8 @@ mod tests {
         let flags: PamFlag = 0;
         let settings = Settings::build(USER_NAME.to_string(), args, flags)?;
         assert_eq!(
-            settings.tally_dir, PathBuf::from("./tests/tally"),
+            settings.tally_dir,
+            PathBuf::from("./tests/tally"),
             "Expected ./tests/tally tall_dir value"
         );
         Ok(())
