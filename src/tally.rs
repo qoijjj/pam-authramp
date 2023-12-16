@@ -1,9 +1,9 @@
 use std::{
-    fs::{self, File},
+    fs,
     path::PathBuf,
 };
 
-use crate::settings::Settings;
+use crate::{settings::Settings, Actions};
 use chrono::{DateTime, Utc};
 use ini::Ini;
 use pam::constants::PamResultCode;
@@ -45,6 +45,30 @@ impl Tally {
                         if let Some(instant) = fails_section.get("instant") {
                             tally.failure_instant = instant.parse().unwrap_or_default();
                         }
+
+                        // Handle specific actions based on settings.action
+                        match settings.action {
+                            Some(Actions::AUTHSUCC) => {
+                                // If action is AUTHSUCC and tally file exists, delete it
+                                fs::remove_file(&tally_file)
+                                    .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?;
+                            }
+                            Some(Actions::AUTHFAIL) => {
+                                // If action is AUTHFAIL, update count and instant
+                                tally.failures_count += 1;
+                                tally.failure_instant = Utc::now();
+                                // Write the updated values back to the file
+                                let mut i = Ini::new();
+                                i.with_section(Some("Fails"))
+                                    .set("count", tally.failures_count.to_string())
+                                    .set("instant", tally.failure_instant.to_string());
+
+                                i.write_to_file(&tally_file)
+                                    .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?;
+                            }
+                            _ => {}
+                        }
+
                         Ok(())
                     } else {
                         // If the section doesn't exist, return an error
