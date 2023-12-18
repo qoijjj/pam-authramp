@@ -39,9 +39,7 @@ impl Settings {
         )
         .ok()
         // Clone "Settings" section if it exists.
-        .and_then(|ini| {
-            ini.section(Some("Settings")).cloned()
-        })
+        .and_then(|ini| ini.section(Some("Settings")).cloned())
         // Map section to Settings struct, defaulting "tally_dir" if absent.
         .map(|settings| Settings {
             tally_dir: settings
