@@ -15,7 +15,7 @@ sudo dnf install pam-devel
 All moduled except the library endpoints are unit tested. The library endpoints are tested in the auth integration test.
 Run unit tests:
 ```console
-cargo test --lib
+cargo xtask test -- --lib
 ```
 ### 🔍 Linting
 
