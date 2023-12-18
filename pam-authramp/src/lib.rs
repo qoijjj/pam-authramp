@@ -2,7 +2,6 @@ mod settings;
 mod tally;
 
 extern crate chrono;
-extern crate dotenv_codegen;
 extern crate ini;
 extern crate once_cell;
 extern crate pam;
