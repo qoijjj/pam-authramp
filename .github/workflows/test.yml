@@ -18,5 +18,6 @@ jobs:
     - name: rs-cargo
       uses: clechasseur/rs-cargo@v2.0.1
       with:
-        command: test --release --lib
+        command: test 
+        args: --release --lib
         working-directory: .
