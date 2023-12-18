@@ -8,17 +8,22 @@ This module is developed and tested in a fedora 38 distrobox.
 ### 🔨 prerequisites
 The following packages need to be installed:
 ```console
-sudo dnf install pam-devel clang-devel just
+sudo dnf install pam-devel
 ```
 ### 🧪 testing
-Edit the environment variables in the `.env` file. Change the environment variables for `TEST_USER_NAME` & `TEST_USER_PASSWD` to a matching user with the correct permissions.
-Run all tests:
-```console
-just test
-```
 #### ✅ Unit tests
 All moduled except the library endpoints are unit tested. The library endpoints are tested in the auth integration test.
 Run unit tests:
 ```console
-just unit-test
+cargo test --lib
+```
+### 🔍 Linting
+
+Run linter:
+```console
+cargo xtask lint
+```
+fix:
+```console
+cargo xtask tidy
 ```

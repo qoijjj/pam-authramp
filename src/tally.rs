@@ -186,7 +186,7 @@ mod tests {
 
         // Check if the values are updated on AUTHFAIL
         assert_eq!(tally.failures_count, 3); // Assuming you increment the count
-        // Also, assert that the instant is updated to the current time
+                                             // Also, assert that the instant is updated to the current time
 
         // Optionally, you can assert that the file is updated
         let ini_content = fs::read_to_string(&tally_file_path).unwrap();
