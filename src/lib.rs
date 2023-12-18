@@ -39,7 +39,7 @@ impl PamHooks for PamRampDelay {
         match settings.action {
             Some(Actions::PREAUTH) | Some(Actions::AUTHSUCC) => PamResultCode::PAM_SUCCESS,
             Some(Actions::AUTHFAIL) => {
-                return PamResultCode::PAM_AUTH_ERR;
+                PamResultCode::PAM_AUTH_ERR
             }
             None => PamResultCode::PAM_AUTH_ERR,
         }

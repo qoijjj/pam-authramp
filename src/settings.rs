@@ -40,19 +40,18 @@ impl Settings {
         .ok()
         // Clone "Settings" section if it exists.
         .and_then(|ini| {
-            ini.section(Some("Settings"))
-                .map(|settings| settings.clone())
+            ini.section(Some("Settings")).cloned()
         })
         // Map section to Settings struct, defaulting "tally_dir" if absent.
         .map(|settings| Settings {
             tally_dir: settings
                 .get("tally_dir")
-                .map(|s| PathBuf::from(s))
+                .map(PathBuf::from)
                 .unwrap_or_default(),
             ..Settings::default()
         })
         // Fallback to default Settings if any failures.
-        .unwrap_or_else(|| Settings::default());
+        .unwrap_or_default();
 
         // create possible action collection
         let action_map: HashMap<&str, Actions> = [

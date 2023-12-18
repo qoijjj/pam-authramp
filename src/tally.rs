@@ -113,7 +113,7 @@ mod tests {
             .set("count", "42")
             .set("instant", "2023-01-01T00:00:00Z");
 
-        i.write_to_file(&tally_file_path).unwrap();
+        i.write_to_file(tally_file_path).unwrap();
 
         // Create settings and call open
         let settings = Settings {
@@ -157,7 +157,7 @@ mod tests {
         assert_eq!(tally.failures_count, 0);
 
         // Check if the INI file has been created with default values
-        let ini_content = fs::read_to_string(&tally_file_path).unwrap();
+        let ini_content = fs::read_to_string(tally_file_path).unwrap();
         assert!(ini_content.contains("[Fails]"));
         assert!(ini_content.contains("count=0"));
     }
@@ -216,7 +216,7 @@ mod tests {
             action: Some(Actions::AUTHSUCC),
         };
 
-        let tally = Tally::open(&settings).unwrap();
+        let _tally = Tally::open(&settings).unwrap();
 
         // Check if the file is deleted on AUTHSUCC
         assert!(!tally_file_path.exists());
