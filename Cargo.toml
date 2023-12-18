@@ -1,5 +1,5 @@
 [package]
-name = "pam-rampdelay"
+name = "pam-authramp"
 version = "0.1.0"
 description = "A PAM module for implementing ramping up delay on authentication failures."
 authors = ["34n0 <34n0@immerda.ch>"]
