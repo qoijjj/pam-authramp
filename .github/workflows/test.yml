@@ -21,4 +21,4 @@ jobs:
       uses: clechasseur/rs-cargo@v2.0.1
       with:
     # Cargo command to run (ex. `check` or `build`)
-        command: cargo test
+        command: test
