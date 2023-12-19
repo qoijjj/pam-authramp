@@ -7,6 +7,8 @@ jobs:
     name: Rust project
     runs-on: ubuntu-latest
     steps:
+      - name: Install Prerequisites
+        run: sudo apt install -y libopencv-dev clang libclang-dev libpam-dev
       - name: Checkout repository
         uses: actions/checkout@v2
 
