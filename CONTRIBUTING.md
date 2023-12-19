@@ -146,7 +146,6 @@ cargo xtask test -- --lib
 This project uses code coverage to ensure the reliability of its components. However, it's important to note that the coverage percentage does not include the library endpoints. The library endpoints, responsible for interacting with the system's Pluggable Authentication Module (PAM), are excluded from the coverage calculation.
 
 The reason for this exclusion is that the integration tests for these endpoints involve interactions with the system's PAM module, which cannot be accurately measured within the test suite. Despite this exclusion, the project maintains a high level of confidence in its functionality, as all components, including the library endpoints, are thoroughly unit tested.
-## Styleguides
 ### 🔍 Linting
 Run linter:
 ```console
@@ -156,7 +155,7 @@ fix:
 ```console
 cargo xtask tidy
 ```
-### 💫 Pull Requests
+## 💫 Pull Requests
 
 #### Before Submitting a Pull Request
 
