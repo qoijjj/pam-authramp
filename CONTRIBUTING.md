@@ -20,6 +20,7 @@ All types of contributions are encouraged and valued. See the [Table of Contents
   - [Reporting Bugs](#reporting-bugs)
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Your First Code Contribution](#your-first-code-contribution)
+  - [Pull Requests](#pull-requests)
 
 
 ## Code of Conduct
@@ -155,7 +156,7 @@ fix:
 ```console
 cargo xtask tidy
 ```
-## 💫 Pull Requests
+### 💫 Pull Requests
 
 #### Before Submitting a Pull Request
 
