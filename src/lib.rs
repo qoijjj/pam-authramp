@@ -29,14 +29,12 @@ pub struct PamRampDelay;
 
 pam::pam_hooks!(PamRampDelay);
 impl PamHooks for PamRampDelay {
-
-    #[cfg(not(tarpaulin_include))]
     fn sm_authenticate(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
         let user = get_user_by_name(&pamh.get_user(None).unwrap());
 
         let settings = pam_try!(Settings::build(user, _args, _flags, None));
 
-        let _tally = pam_try!(Tally::open(&settings));
+        let tally = pam_try!(Tally::open(&settings));
 
         match settings.action {
             Some(Actions::PREAUTH) | Some(Actions::AUTHSUCC) => PamResultCode::PAM_SUCCESS,
@@ -45,13 +43,11 @@ impl PamHooks for PamRampDelay {
         }
     }
 
-    #[cfg(not(tarpaulin_include))]
     fn sm_setcred(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
         println!("set credentials");
         PamResultCode::PAM_SUCCESS
     }
 
-    #[cfg(not(tarpaulin_include))]
     fn acct_mgmt(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
         println!("account management");
         PamResultCode::PAM_SUCCESS
