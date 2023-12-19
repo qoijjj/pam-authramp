@@ -1,4 +1,4 @@
-# Code of Conduct - pam-authramp
+# ❤️ Code of Conduct
 
 ## Our Pledge
 

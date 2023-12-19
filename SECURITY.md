@@ -1,4 +1,4 @@
-# Security
+# 🔒 Security
 
 ## Reporting Potential Security Issues
 
