@@ -34,7 +34,7 @@ impl PamHooks for PamRampDelay {
 
         let settings = pam_try!(Settings::build(user, _args, _flags, None));
 
-        let tally = pam_try!(Tally::open(&settings));
+        let _tally = pam_try!(Tally::open(&settings));
 
         match settings.action {
             Some(Actions::PREAUTH) | Some(Actions::AUTHSUCC) => PamResultCode::PAM_SUCCESS,
