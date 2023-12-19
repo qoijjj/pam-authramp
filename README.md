@@ -7,4 +7,4 @@ This Pluggable Authentication Module (PAM) is designed to enhance security on pe
 Read the whole [Threat Model Description](THREAT_MODEL.md) to understand the intention behind this project.
 
 ## Contributing
-Read the [Contributing](CONTRIBUTING.md) document and respect the [CoC](CODE_OF_CONDUCT.md).
+Read the [Contributing](CONTRIBUTING.md) guideline and respect the [CoC](CODE_OF_CONDUCT.md).
