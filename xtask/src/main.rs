@@ -68,9 +68,13 @@ fn main() -> anyhow::Result<()> {
         }
         Some(Commands::PamTest) => {
             cmd!(sh, "cargo build").run()?;
-            cmd!(sh, "sudo cp target/debug/libpam_authramp.so /lib64/security").run()?;
+            cmd!(
+                sh,
+                "sudo cp target/debug/libpam_authramp.so /lib64/security"
+            )
+            .run()?;
             set_sudo_runner()?;
-            let _ = cmd!(sh, "cargo test --test '*'").run();
+            let _ = cmd!(sh, "cargo test --test '*' -- --test-threads=1").run();
             remove_sudo_runner()?;
             cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run()?;
         }
