@@ -12,7 +12,7 @@ mod test_pam_auth {
     const USER_PWD: &str = dotenv!("TEST_USER_PWD");
 
     #[test]
-    fn test_pam_auth_valid_credentials() {
+    fn test_valid_creds_success() {
         utils::create_pam_service_file();
         let mut ctx = Context::new(
             utils::PAM_SRV, // Service name
@@ -28,7 +28,7 @@ mod test_pam_auth {
     }
 
     #[test]
-    fn test_pam_auth_invalid_credentials() {
+    fn test_invalid_creds_creates_tally() {
         utils::create_pam_service_file();
         let mut ctx = Context::new(
             utils::PAM_SRV, // Service name
@@ -38,11 +38,13 @@ mod test_pam_auth {
         .expect("Failed to create PAM context");
 
         // Expect an error during authentication (invalid credentials)
-        let _ = ctx.authenticate(Flag::NONE).unwrap_err();
+        let auth_result = ctx.authenticate(Flag::NONE);
+        assert!(auth_result.is_err(), "Authentication succeeded!");
 
-        // Additional assertions or test steps
-        ctx.acct_mgmt(Flag::NONE)
-            .expect("Account management failed");
+        // Expect tally file gets created
+        let tally_file_path = utils::get_tally_file_path();
+        assert!(tally_file_path.exists(), "Tally file not created");
+        
         utils::remove_pam_service_file();
     }
 }

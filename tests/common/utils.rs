@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-#[cfg(test)]
+
 use std::{
     fs::{remove_file, File},
     io::Write,
@@ -7,6 +7,8 @@ use std::{
 
 pub const SRV_DIR: &str = "/etc/pam.d";
 pub const PAM_SRV: &str = "test-rampdelay";
+
+const USER_NAME: &str = dotenv!("TEST_USER_NAME");
 
 pub fn create_pam_service_file() {
     let mut file =
@@ -23,4 +25,8 @@ pub fn create_pam_service_file() {
 
 pub fn remove_pam_service_file() {
     remove_file(PathBuf::from(SRV_DIR).join(PAM_SRV)).expect("failed to remove service file");
+}
+
+pub fn get_tally_file_path() -> PathBuf {
+    return PathBuf::from("/var/run/rampdelay").join(USER_NAME)
 }
