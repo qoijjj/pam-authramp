@@ -12,8 +12,10 @@ runner = 'sudo -E'";
 const ALIAS: &str = "[alias] \n\
 xtask = 'run --package xtask --'";
 
-// appends the sudo runner to the cargo config file
-fn set_sudo_runner() -> anyhow::Result<()> {
+fn set_and_remove_sudo_runner<F>(sudo_f: F)
+where
+    F: FnOnce(),
+{
     // Open the file in append mode, creating it if it doesn't exist
     let mut file = OpenOptions::new()
         .create(true)
@@ -24,17 +26,13 @@ fn set_sudo_runner() -> anyhow::Result<()> {
     // Append the content to the file
     file.write_all(RUNNER.as_bytes())
         .expect("Unable to write to file");
-    Ok(())
-}
 
-// recreates the config with the alias setting
-fn remove_sudo_runner() -> anyhow::Result<()> {
-    let mut file = File::create(".cargo/config.toml").expect("Unable to create file");
+    sudo_f();
+
+    file = File::create(".cargo/config.toml").expect("Unable to create file");
 
     file.write_all(ALIAS.as_bytes())
         .expect("Unable to write to file");
-
-    Ok(())
 }
 
 /// pam-rampdelay development tool
@@ -73,10 +71,10 @@ fn main() -> anyhow::Result<()> {
                 "sudo cp target/debug/libpam_authramp.so /lib64/security"
             )
             .run()?;
-            set_sudo_runner()?;
-            let _ = cmd!(sh, "cargo test --test '*' -- --test-threads=1").run();
-            remove_sudo_runner()?;
-            cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run()?;
+            set_and_remove_sudo_runner(|| {
+                let _ = cmd!(sh, "cargo test --test '*' -- --test-threads=1").run();
+                let _ = cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run();
+            })
         }
         None => {}
     }
