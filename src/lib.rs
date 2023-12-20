@@ -45,7 +45,7 @@ impl PamHooks for PamRampDelay {
 
     fn acct_mgmt(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
         let user = get_user_by_name(&pamh.get_user(None).unwrap());
-        
+
         let settings = pam_try!(Settings::build(user, _args, _flags, None));
 
         let _tally = pam_try!(Tally::open(&settings));

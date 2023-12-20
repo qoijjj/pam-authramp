@@ -5,7 +5,7 @@ mod common;
 
 #[cfg(test)]
 mod test_pam_auth {
-    use std::{fs, thread, time::Duration};
+    use std::fs;
 
     use crate::common::utils::get_pam_context;
 
@@ -50,7 +50,6 @@ mod test_pam_auth {
             let mut count = 0;
             let total_tries = 2;
 
-    
             while count < total_tries {
                 // Expect an error during authentication (invalid credentials)
                 let auth_result = ctx.authenticate(Flag::NONE);
@@ -77,14 +76,17 @@ mod test_pam_auth {
             // Expect an error during authentication (invalid credentials)
             let auth_result = ctx.authenticate(Flag::NONE);
             assert!(auth_result.is_err(), "Authentication succeeded!");
-            
+
             // Expect tally file gets created
             let tally_file_path = utils::get_tally_file_path(USER_NAME);
             assert!(tally_file_path.exists(), "Tally file not created");
 
             // Expect tally count to increase
             let ini_content = fs::read_to_string(&tally_file_path).unwrap();
-            assert!(ini_content.contains("count=1"), "Expected tally count to increase");
+            assert!(
+                ini_content.contains("count=1"),
+                "Expected tally count to increase"
+            );
 
             let mut ctx = get_pam_context(USER_NAME, USER_PWD);
 
@@ -93,11 +95,11 @@ mod test_pam_auth {
             assert!(auth_result.is_ok(), "Authentication failed!");
 
             ctx.acct_mgmt(Flag::NONE)
-            .expect("Account management failed");
+                .expect("Account management failed");
 
-             // Expect tally count to decrease
-             let ini_content = fs::read_to_string(&tally_file_path).unwrap();
-             assert!(ini_content.contains("count=0"), "Expected tally count = 0");
+            // Expect tally count to decrease
+            let ini_content = fs::read_to_string(&tally_file_path).unwrap();
+            assert!(ini_content.contains("count=0"), "Expected tally count = 0");
         })
     }
 }

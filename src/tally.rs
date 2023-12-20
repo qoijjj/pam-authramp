@@ -52,7 +52,7 @@ impl Tally {
                                 let mut i = Ini::new();
                                 i.with_section(Some("Fails"))
                                     .set("count", tally.failures_count.to_string());
-                                
+
                                 i.write_to_file(&tally_file)
                                     .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?;
                             }
@@ -230,6 +230,5 @@ mod tests {
         // Expect tally count to decrease
         let ini_content = fs::read_to_string(&tally_file_path).unwrap();
         assert!(ini_content.contains("count=0"), "Expected tally count = 0");
-
     }
 }
