@@ -45,6 +45,7 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
+    Test,
     // pam authentication integration test
     PamTest,
     Lint,
@@ -56,6 +57,19 @@ fn main() -> anyhow::Result<()> {
     let sh = Shell::new()?;
 
     match &cli.command {
+        Some(Commands::Test) => {
+            cmd!(sh, "cargo build").run()?;
+            cmd!(
+                sh,
+                "sudo cp target/debug/libpam_authramp.so /lib64/security"
+            )
+            .run()?;
+            set_and_remove_sudo_runner(|| {
+                let _ = cmd!(sh, "cargo test -- --test-threads=1").run();
+                let _ = cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run();
+                let _ = cmd!(sh, "sudo rm -rf /var/run/rampdelay").run();
+            })
+        }
         Some(Commands::Lint) => {
             cmd!(sh, "cargo fmt --check").run()?;
             cmd!(sh, "cargo clippy").run()?;
@@ -74,6 +88,7 @@ fn main() -> anyhow::Result<()> {
             set_and_remove_sudo_runner(|| {
                 let _ = cmd!(sh, "cargo test --test '*' -- --test-threads=1").run();
                 let _ = cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run();
+                let _ = cmd!(sh, "sudo rm -rf /var/run/rampdelay").run();
             })
         }
         None => {}
