@@ -42,12 +42,18 @@ impl Tally {
                         if let Some(instant) = fails_section.get("instant") {
                             tally.failure_instant = instant.parse().unwrap_or_default();
                         }
-
                         // Handle specific actions based on settings.action
                         match settings.action {
                             Some(Actions::AUTHSUCC) => {
-                                // If action is AUTHSUCC and tally file exists, delete it
-                                fs::remove_file(&tally_file)
+                                // If action is AUTHFAIL, update count
+                                tally.failures_count = 0;
+
+                                // Write the updated values back to the file
+                                let mut i = Ini::new();
+                                i.with_section(Some("Fails"))
+                                    .set("count", tally.failures_count.to_string());
+                                
+                                i.write_to_file(&tally_file)
                                     .map_err(|_| PamResultCode::PAM_SYSTEM_ERR)?;
                             }
                             Some(Actions::AUTHFAIL) => {
@@ -119,6 +125,7 @@ mod tests {
         let settings = Settings {
             user: Some(User::new(9999, "test_user_a", 9999)),
             tally_dir: temp_dir.path().to_path_buf(),
+            action: Some(Actions::PREAUTH),
             ..Default::default()
         };
 
@@ -180,6 +187,7 @@ mod tests {
             user: Some(User::new(9999, "test_user_c", 9999)),
             tally_dir: temp_dir.path().to_path_buf(),
             action: Some(Actions::AUTHFAIL),
+            free_tries: 6,
         };
 
         let tally = Tally::open(&settings).unwrap();
@@ -197,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn test_open_auth_succ_deletes_file() {
+    fn test_open_auth_succ_resets_tally() {
         // Create a temporary directory
         let temp_dir = TempDir::new("test_open_auth_succ_deletes_file").unwrap();
         let tally_file_path = temp_dir.path().join("test_user_d");
@@ -214,14 +222,14 @@ mod tests {
             user: Some(User::new(9999, "test_user_d", 9999)),
             tally_dir: temp_dir.path().to_path_buf(),
             action: Some(Actions::AUTHSUCC),
+            free_tries: 6,
         };
 
         let _tally = Tally::open(&settings).unwrap();
 
-        // Check if the file is deleted on AUTHSUCC
-        assert!(!tally_file_path.exists());
-        // You may also want to assert that the INI file is not present
+        // Expect tally count to decrease
+        let ini_content = fs::read_to_string(&tally_file_path).unwrap();
+        assert!(ini_content.contains("count=0"), "Expected tally count = 0");
 
-        // Additional assertions as needed
     }
 }

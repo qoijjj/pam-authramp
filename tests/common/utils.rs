@@ -1,4 +1,4 @@
-use std::fs::{remove_dir, remove_dir_all};
+use std::fs::remove_dir_all;
 use std::io;
 use std::path::PathBuf;
 

@@ -43,13 +43,17 @@ impl PamHooks for PamRampDelay {
         }
     }
 
-    fn sm_setcred(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        println!("set credentials");
+    fn acct_mgmt(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
+        let user = get_user_by_name(&pamh.get_user(None).unwrap());
+        
+        let settings = pam_try!(Settings::build(user, _args, _flags, None));
+
+        let _tally = pam_try!(Tally::open(&settings));
         PamResultCode::PAM_SUCCESS
     }
 
-    fn acct_mgmt(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        println!("account management");
+    fn sm_setcred(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
+        println!("set credentials");
         PamResultCode::PAM_SUCCESS
     }
 }
