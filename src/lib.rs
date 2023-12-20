@@ -30,7 +30,7 @@ pub struct PamRampDelay;
 pam::pam_hooks!(PamRampDelay);
 impl PamHooks for PamRampDelay {
     fn sm_authenticate(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        let user = get_user_by_name(&pamh.get_user(None).unwrap());
+        let user = get_user_by_name(pam_try!(&pamh.get_user(None), PamResultCode::PAM_AUTH_ERR));
 
         let settings = pam_try!(Settings::build(user, _args, _flags, None));
 
@@ -44,7 +44,7 @@ impl PamHooks for PamRampDelay {
     }
 
     fn acct_mgmt(pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        let user = get_user_by_name(&pamh.get_user(None).unwrap());
+        let user = get_user_by_name(pam_try!(&pamh.get_user(None), PamResultCode::PAM_AUTH_ERR));
 
         let settings = pam_try!(Settings::build(user, _args, _flags, None));
 
