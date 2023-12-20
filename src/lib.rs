@@ -51,9 +51,4 @@ impl PamHooks for PamRampDelay {
         let _tally = pam_try!(Tally::open(&settings));
         PamResultCode::PAM_SUCCESS
     }
-
-    fn sm_setcred(_pamh: &mut PamHandle, _args: Vec<&CStr>, _flags: PamFlag) -> PamResultCode {
-        println!("set credentials");
-        PamResultCode::PAM_SUCCESS
-    }
 }
