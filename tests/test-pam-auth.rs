@@ -5,6 +5,7 @@ mod common;
 
 #[cfg(test)]
 mod test_pam_auth {
+
     use std::fs;
 
     use crate::common::utils::get_pam_context;
@@ -101,5 +102,38 @@ mod test_pam_auth {
             let ini_content = fs::read_to_string(&tally_file_path).unwrap();
             assert!(ini_content.contains("count=0"), "Expected tally count = 0");
         })
+    }
+
+    #[test]
+    fn test_failures_exceed_free_tries_cause_bounce() {
+        utils::init_and_clear_test(|| {
+            let mut ctx = get_pam_context(USER_NAME, "INVALID");
+
+            let mut count = 0;
+            // free tries default is 6
+            let total_tries = 7;
+
+            while count < total_tries {
+                // Expect an error during authentication (invalid credentials)
+                let auth_result = ctx.authenticate(Flag::NONE);
+                assert!(auth_result.is_err(), "Authentication succeeded!");
+
+                count += 1;
+            }
+
+            // Expect tally file gets created
+            let tally_file_path = utils::get_tally_file_path(USER_NAME);
+            assert!(tally_file_path.exists(), "Tally file not created");
+
+            // Expect tally count
+            let ini_content = fs::read_to_string(tally_file_path).unwrap();
+            assert!(ini_content.contains(&format!("count={}", total_tries)));
+
+            let log = ctx.conversation().log.clone();
+
+            // expect pam log message
+            let log_str = format!("{:?}", &log);
+            assert_eq!(&log_str, "[Error(\"Account locked!\")]");
+        });
     }
 }

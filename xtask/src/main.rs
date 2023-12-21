@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
             )
             .run()?;
             set_and_remove_sudo_runner(|| {
-                let _ = cmd!(sh, "cargo test -- --test-threads=1").run();
+                let _ = cmd!(sh, "cargo test -- --test-threads=1 --show-output").run();
                 let _ = cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run();
                 let _ = cmd!(sh, "sudo rm -rf /var/run/rampdelay").run();
             })
@@ -86,7 +86,11 @@ fn main() -> anyhow::Result<()> {
             )
             .run()?;
             set_and_remove_sudo_runner(|| {
-                let _ = cmd!(sh, "cargo test --test '*' -- --test-threads=1").run();
+                let _ = cmd!(
+                    sh,
+                    "cargo test --test '*' -- --test-threads=1 --show-output"
+                )
+                .run();
                 let _ = cmd!(sh, "sudo rm -f /lib64/security/libpam_authramp.so").run();
                 let _ = cmd!(sh, "sudo rm -rf /var/run/rampdelay").run();
             })
