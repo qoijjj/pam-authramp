@@ -4,20 +4,30 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-env:
-  CARGO_TERM_COLOR: always
-  BUILD_TARGET: x86_64-unknown-linux-musl
-  BINARY_NAME: libpam-authramp
+
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - target.x86_64-unknown-linux-gnu
     steps:
-    - uses: actions/checkout@v2
-    - name: Build-musl
-      uses: gmiam/rust-musl-action@master
-      with:
-        args: cargo build --target $BUILD_TARGET --release
-    - uses: actions/upload-artifact@v2
-      with:
-        name: ${{ env.BINARY_NAME }}
-        path: target/x86_64-unknown-linux-musl/release/${{ env.BINARY_NAME }}*
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target=${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libpam-authramp
+          path: |
+            target/release/libpam_authramp.so
+            LICENSE
+            README.md
