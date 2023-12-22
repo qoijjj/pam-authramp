@@ -10,7 +10,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt install libpam-dev clang-dev
+      - run: sudo apt install libpam-dev clang-12
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
