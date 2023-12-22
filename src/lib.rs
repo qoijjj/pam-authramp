@@ -51,11 +51,26 @@ where
 
 // delay=multi(tries-free)⋅log(tries-free)+base
 fn calc_delay(fails: i32, settings: &Settings) -> f64 {
-    
     settings.ramp_multiplier as f64
         * (fails as f64 - settings.free_tries as f64)
         * ((fails as f64 - settings.free_tries as f64).ln())
         + settings.base_delay_seconds as f64
+}
+
+fn fmt_remaining_time(remaining_time: Duration) -> String {
+    let mut formatted_time = String::new();
+
+    if remaining_time.num_hours() > 0 {
+        formatted_time.push_str(&format!("{} hours ", remaining_time.num_hours()));
+    }
+
+    if remaining_time.num_minutes() > 0 {
+        formatted_time.push_str(&format!("{} minutes ", remaining_time.num_minutes() % 60));
+    }
+
+    formatted_time.push_str(&format!("{} seconds", remaining_time.num_seconds() % 60));
+
+    formatted_time
 }
 
 fn bounce_auth(pamh: &mut PamHandle, settings: &Settings, tally: &Tally) -> PamResultCode {
@@ -66,26 +81,16 @@ fn bounce_auth(pamh: &mut PamHandle, settings: &Settings, tally: &Tally) -> PamR
             // Calculate the time when the account will be unlocked
             let unlock_time = tally.failure_instant + Duration::seconds(delay as i64);
 
-            let _ = conv.send(
-                PAM_ERROR_MSG,
-                "Too many attempts! Account locked!",
-            );
-
             while Utc::now() < unlock_time {
                 // Calculate remaining time until unlock
                 let remaining_time = unlock_time - Utc::now();
-
-                // Format time
-                let r_hours = remaining_time.num_hours();
-                let r_minutes = (remaining_time.num_minutes() % 60).abs();
-                let r_seconds = (remaining_time.num_seconds() % 60).abs();
 
                 // Send a message to the conversation function
                 let _ = conv.send(
                     PAM_ERROR_MSG,
                     &format!(
-                        "Account locked for {:02} hours {:02} minutes {:02} seconds.",
-                        r_hours, r_minutes, r_seconds
+                        "Account locked! Unlocking in {}.",
+                        fmt_remaining_time(remaining_time)
                     ),
                 );
 
