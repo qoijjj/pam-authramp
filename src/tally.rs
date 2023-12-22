@@ -188,6 +188,8 @@ mod tests {
             tally_dir: temp_dir.path().to_path_buf(),
             action: Some(Actions::AUTHFAIL),
             free_tries: 6,
+            ramp_multiplier: 50,
+            base_delay_seconds: 30,
         };
 
         let tally = Tally::open(&settings).unwrap();
@@ -223,6 +225,8 @@ mod tests {
             tally_dir: temp_dir.path().to_path_buf(),
             action: Some(Actions::AUTHSUCC),
             free_tries: 6,
+            ramp_multiplier: 50,
+            base_delay_seconds: 30,
         };
 
         let _tally = Tally::open(&settings).unwrap();

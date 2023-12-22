@@ -15,6 +15,8 @@ pub struct Settings {
     pub user: Option<User>,
     pub tally_dir: PathBuf,
     pub free_tries: i32,
+    pub base_delay_seconds: i32,
+    pub ramp_multiplier: i32,
 }
 
 impl Default for Settings {
@@ -24,6 +26,8 @@ impl Default for Settings {
             action: Some(Actions::AUTHSUCC),
             user: None,
             free_tries: 6,
+            base_delay_seconds: 30,
+            ramp_multiplier: 50,
         }
     }
 }
@@ -48,6 +52,14 @@ impl Settings {
                 .unwrap_or_default(),
             free_tries: settings
                 .get("free_tries")
+                .and_then(|val| val.parse().ok())
+                .unwrap_or_default(),
+            base_delay_seconds: settings
+                .get("base_delay")
+                .and_then(|val| val.parse().ok())
+                .unwrap_or_default(),
+            ramp_multiplier: settings
+                .get("ramp_multiplier")
                 .and_then(|val| val.parse().ok())
                 .unwrap_or_default(),
             ..Settings::default()
@@ -95,6 +107,8 @@ mod tests {
         assert_eq!(default_settings.action, Some(Actions::AUTHSUCC));
         assert!(default_settings.user.is_none());
         assert_eq!(default_settings.free_tries, 6);
+        assert_eq!(default_settings.base_delay_seconds, 30);
+        assert_eq!(default_settings.ramp_multiplier, 50);
     }
 
     #[test]
@@ -105,7 +119,9 @@ mod tests {
         let mut i = Ini::new();
         i.with_section(Some("Settings"))
             .set("tally_dir", "/tmp/tally_dir")
-            .set("free_tries", "10");
+            .set("free_tries", "10")
+            .set("base_delay", "15")
+            .set("ramp_multiplier", "20");
 
         i.write_to_file(&ini_file_path).unwrap();
 
@@ -126,6 +142,8 @@ mod tests {
         assert!(settings.user.is_some());
         assert_eq!(settings.user.unwrap().name(), "test_user");
         assert_eq!(settings.free_tries, 10);
+        assert_eq!(settings.base_delay_seconds, 15);
+        assert_eq!(settings.ramp_multiplier, 20);
     }
 
     #[test]

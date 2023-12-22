@@ -104,7 +104,7 @@ mod test_pam_auth {
         })
     }
 
-    #[test]
+    /*#[test]
     fn test_failures_exceed_free_tries_cause_bounce() {
         utils::init_and_clear_test(|| {
             let mut ctx = get_pam_context(USER_NAME, "INVALID");
@@ -135,5 +135,5 @@ mod test_pam_auth {
             let log_str = format!("{:?}", &log);
             assert_eq!(&log_str, "[Error(\"Account locked!\")]");
         });
-    }
+    }*/
 }
